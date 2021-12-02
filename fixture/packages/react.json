@@ -1,0 +1,78 @@
+{
+    "name": "react",
+    "description": "React is a JavaScript library for building user interfaces.",
+    "keywords": [
+        "react"
+    ],
+    "version": "17.0.2",
+    "homepage": "https://reactjs.org/",
+    "bugs": "https://github.com/facebook/react/issues",
+    "license": "MIT",
+    "files": [
+        "LICENSE",
+        "README.md",
+        "dev.index.js",
+        "dev.index.js.map",
+        "dev.jsx-dev-runtime.js",
+        "dev.jsx-dev-runtime.js.map",
+        "dev.jsx-runtime.js",
+        "dev.jsx-runtime.js.map",
+        "index.js",
+        "index.js.map",
+        "jsx-dev-runtime.js",
+        "jsx-dev-runtime.js.map",
+        "jsx-runtime.js",
+        "jsx-runtime.js.map",
+        "package.json",
+        "package.json.js",
+        "package.json.js.map"
+    ],
+    "main": "index.js",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/facebook/react.git",
+        "directory": "packages/react"
+    },
+    "engines": {
+        "node": ">=0.10.0"
+    },
+    "dependencies": {
+        "loose-envify": "^1.1.0",
+        "object-assign": "^4.1.1"
+    },
+    "browserify": {
+        "transform": [
+            "loose-envify"
+        ]
+    },
+    "exports": {
+        ".": {
+            "development": "./dev.index.js",
+            "default": "./index.js"
+        },
+        "./jsx-runtime": {
+            "development": "./dev.jsx-runtime.js",
+            "default": "./jsx-runtime.js"
+        },
+        "./jsx-dev-runtime": {
+            "development": "./dev.jsx-dev-runtime.js",
+            "default": "./jsx-dev-runtime.js"
+        },
+        "./package.json": "./package.json.js",
+        "./jsx-runtime.js": {
+            "development": "./dev.jsx-runtime.js",
+            "default": "./jsx-runtime.js"
+        },
+        "./jsx-dev-runtime.js": {
+            "development": "./dev.jsx-dev-runtime.js",
+            "default": "./jsx-dev-runtime.js"
+        },
+        "./index.js!cjs": "./index.js",
+        "./dev.index.js!cjs": "./dev.index.js",
+        "./jsx-runtime.js!cjs": "./jsx-runtime.js",
+        "./dev.jsx-runtime.js!cjs": "./dev.jsx-runtime.js",
+        "./jsx-dev-runtime.js!cjs": "./jsx-dev-runtime.js",
+        "./dev.jsx-dev-runtime.js!cjs": "./dev.jsx-dev-runtime.js",
+        "./package.json.js!cjs": "./package.json.js"
+    }
+}

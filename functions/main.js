@@ -1,0 +1,1 @@
+export { removeSlashes } from './remove-slash.js';
