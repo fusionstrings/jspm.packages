@@ -55,7 +55,7 @@ async function onRequestGet({ params }) {
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <style>
           ${css}
-        <style>
+        </style>
         ${head.join("\n")}
       </head>
       <body>
