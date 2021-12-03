@@ -2,17 +2,7 @@ import { Helmet, jsx, renderSSR } from "nano-jsx";
 import { marked } from "marked";
 import Package from "../../components/package.js";
 
-export async function onRequestGet(context) {
-  // Contents of context object
-  const {
-    request, // same as existing Worker API
-    env, // same as existing Worker API
-    params, // if filename includes [id] or [[path]]
-    waitUntil, // same as ctx.waitUntil in existing Worker API
-    next, // used for middleware or to fetch assets
-    data, // arbitrary space for passing data between middlewares
-  } = context;
-
+async function onRequestGet({ params }) {
   const NPM_PROVIDER_URL = "https://ga.jspm.io/npm:";
   const packageName = params.package.join("/");
 
@@ -73,8 +63,10 @@ export async function onRequestGet(context) {
         ${footer.join("\n")}
       </body>
     </html>`;
-    
+
   return new Response(html, {
     headers: { "content-type": "text/html; charset=UTF-8" },
   });
 }
+
+export { onRequestGet };
