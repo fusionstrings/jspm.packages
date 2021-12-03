@@ -19,12 +19,11 @@ async function onRequestGet({ params }) {
     files,
     exports,
   } = await jspmPackage.json();
-  const readmeFileName = files.find((file) =>
-    file.toLowerCase() === "readme.md"
-  );
-  const readmeFile = await fetch(
+  
+  const readmeFileNames = ["readme.md", "README.md"]
+  const readmeFile = await Promise.race(readmeFileNames.map(readmeFileName => fetch(
     `${NPM_PROVIDER_URL}${packageName}/${readmeFileName}`,
-  );
+  )));
   const readmeFileContent = await readmeFile.text();
   const readmeHTML = marked.parse(readmeFileContent);
   const app = renderSSR(
@@ -34,14 +33,6 @@ async function onRequestGet({ params }) {
   const { body, head, footer } = Helmet.SSR(app);
 
   const css = `
-    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,700&family=Source+Code+Pro&display=swap');
-
-      body{
-          font-family: 'Playfair Display', serif;
-      }
-      code{
-          font-family: 'Source Code Pro', monospace;
-      }
       jspm-package-name, jspm-package-version, jspm-package-description, jspm-package-license, jspm-package-file{
           display: block;
       }
