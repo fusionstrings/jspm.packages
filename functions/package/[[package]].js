@@ -2,12 +2,46 @@ import { Helmet, jsx, renderSSR } from "nano-jsx";
 import { marked } from "marked";
 import Package from "../../components/package.js";
 
-async function onRequestGet({ params }) {
+async function fetchAndCache(url, waitUntil){
+  const cacheUrl = new URL(url)
+
+  // Construct the cache key from the cache URL
+  const cacheKey = new Request(cacheUrl.toString())
+  const cache = caches.default
+
+  // Check whether the value is already available in the cache
+  // if not, you will need to fetch it from origin, and store it in the cache
+  // for future access
+  let response = await cache.match(cacheKey)
+
+  if (!response) {
+    // If not in cache, get it from origin
+    response = await fetch(url)
+
+    // Must use Response constructor to inherit all of response's fields
+    response = new Response(response.body, response)
+
+    // Cache API respects Cache-Control headers. Setting s-max-age to 10
+    // will limit the response to be in cache for 10 seconds max
+
+    // Any changes made to the response here will be reflected in the cached value
+    // response.headers.append("Cache-Control", "s-maxage=10")
+
+    // Store the fetched response as cacheKey
+    // Use waitUntil so you can return the response without blocking on
+    // writing to cache
+    waitUntil(cache.put(cacheKey, response.clone()))
+  }
+  return response
+}
+
+async function onRequestGet({ params, waitUntil }) {
   const NPM_PROVIDER_URL = "https://ga.jspm.io/npm:";
   const packageName = params.package.join("/");
 
-  const jspmPackage = await fetch(
+  const jspmPackage = await fetchAndCache(
     `${NPM_PROVIDER_URL}${packageName}/package.json`,
+    waitUntil
   );
   const {
     name,
@@ -21,8 +55,9 @@ async function onRequestGet({ params }) {
   } = await jspmPackage.json();
   
   const readmeFileNames = ["readme.md", "README.md"]
-  const readmeFile = await Promise.race(readmeFileNames.map(readmeFileName => fetch(
+  const readmeFile = await Promise.any(readmeFileNames.map(readmeFileName => fetchAndCache(
     `${NPM_PROVIDER_URL}${packageName}/${readmeFileName}`,
+    waitUntil
   )));
   const readmeFileContent = await readmeFile.text();
   const readmeHTML = marked.parse(readmeFileContent);
