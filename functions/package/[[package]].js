@@ -33,7 +33,7 @@ async function onRequestGet({ params, env }) {
       readmeHTML = marked.parse(readmeFileContent);
       jspmPackage = jspmPackageResponse;
       if(README_HTML) {
-        README_HTML.put(`${baseURL}/readme.md.html`, readmeHTML)
+        await README_HTML.put(`${baseURL}/readme.md.html`, readmeHTML)
       }
     }
 
