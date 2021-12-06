@@ -11,7 +11,7 @@ import {
   renderSSR,
 } from "https://ga.jspm.io/npm:nano-jsx@0.0.25/lib/index.js";
 
-import Package from "./components/package-deno.js";
+import Package from "./components/package.js";
 //import { removeSlashes } from "./functions/remove-slash.js";
 
 const assetMap = {
