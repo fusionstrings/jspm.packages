@@ -1,9 +1,5 @@
 // currently copy of server.js with Deno.readFile instead of fetch
 import { serve } from "https://deno.land/std@0.117.0/http/server.ts";
-import {
-  contentType,
-  lookup,
-} from "https://deno.land/x/media_types@v2.11.0/mod.ts";
 import { marked } from "https://ga.jspm.io/npm:marked@4.0.5/lib/marked.esm.js";
 import {
   Helmet,
@@ -12,22 +8,6 @@ import {
 } from "https://ga.jspm.io/npm:nano-jsx@0.0.25/lib/index.js";
 
 import Package from "./components/package.js";
-//import { removeSlashes } from "./functions/remove-slash.js";
-
-const assetMap = {
-  "/": "./index.html",
-  "/dom/main.js": "./dom/main.js",
-  "/functions/main.js": "./functions/main.js",
-  "/functions/remove-slash.js": "./functions/remove-slash.js",
-  "/packages": "./packages.html",
-  "/packages/[package]": "./package.html",
-  "/packages/[package]/css/style.css": "./css/style.css",
-  "/packages/[package]/dom/main.js": "./dom/main.js",
-  "/packages/[package]/functions/main.js": "./functions/main.js",
-  "/packages/[package]/functions/remove-slash.js":
-    "./functions/remove-slash.js",
-  "/packages/[package]/components/package.js": "./components/package.js",
-};
 
 async function customFetch(url, options) {
   const response = await fetch(url, options);
@@ -109,14 +89,14 @@ async function requestHandler(request) {
         return new Response(html, {
           headers: {
             "content-type": "text/html; charset=UTF-8",
-            "Cache-Control": "s-maxage=1500",
+            "Cache-Control": "s-maxage=1500, public, immutable, stale-while-revalidate=1501",
           },
         });
       }
     }
 
     return new Response("404", {
-      headers: { "content-type": contentType("html") },
+      headers: { "content-type": "text/html; charset=UTF-8" },
     });
   } catch (error) {
     return new Response(error.message || error.toString(), { status: 500 });
