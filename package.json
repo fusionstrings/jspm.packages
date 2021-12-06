@@ -2,7 +2,6 @@
   "name": "jspm.packages",
   "version": "1.0.0",
   "description": "JSPM Package explorer UI",
-  "main": "deploy.js",
   "scripts": {
     "dev": "wrangler pages dev ./"
   },
@@ -11,12 +10,6 @@
     "url": "git+https://github.com/fusionstrings/jspm.packages.git"
   },
   "keywords": ["jspm"],
-  "author": "",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/fusionstrings/jspm.packages/issues"
-  },
-  "homepage": "https://github.com/fusionstrings/jspm.packages#readme",
   "devDependencies": {
     "@cloudflare/workers-types": "^3.2.0",
     "wrangler": "^0.0.0-beta.6"
