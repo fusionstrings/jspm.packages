@@ -88,11 +88,12 @@ async function onRequestGet({ params, env, waitUntil }) {
     return new Response(html, {
       headers: {
         "content-type": "text/html; charset=UTF-8",
-        "Cache-Control": "s-maxage=1500",
+        "Cache-Control": "s-maxage=1500, public, immutable, stale-while-revalidate=1501",
       },
     });
   } catch (error) {
-    return new Response(`${error.message}\n${error.stack}`, { status: 500 });
+    console.log(error.stack);
+    return new Response(`${error.message}`, { status: 500 });
   }
 }
 
