@@ -13,6 +13,11 @@ async function onRequestGet({ params, env, waitUntil }) {
       filesToFetch.map((file) =>
         fetch(
           `${baseURL}/${file}`,
+          {
+            cf: {
+              cacheTtlByStatus: { "200-299": 86400, 404: 1, "500-599": 0 },
+            },
+          },
         )
       ),
     );
