@@ -1,98 +1,102 @@
 // currently copy of server.js with Deno.readFile instead of fetch
-import { serve } from "https://deno.land/std@0.116.0/http/server.ts";
-import { contentType, lookup } from "https://deno.land/x/media_types@v2.11.0/mod.ts";
-// import { removeSlashes } from "./functions/remove-slash.js";
+import { serve } from "https://deno.land/std@0.117.0/http/server.ts";
+import { marked } from "https://ga.jspm.io/npm:marked@4.0.5/lib/marked.esm.js";
+import {
+  Helmet,
+  jsx,
+  renderSSR,
+} from "https://ga.jspm.io/npm:nano-jsx@0.0.25/lib/index.js";
 
-const assetMap = {
-  "/": "./index.html",
-  "/dom/main.js": "./dom/main.js",
-  "/functions/main.js": "./functions/main.js",
-  "/functions/remove-slash.js": "./functions/remove-slash.js",
-  "/packages": "./packages.html",
-  "/packages/[package]": "./package.html",
-  "/packages/[package]/css/style.css": "./css/style.css",
-  "/packages/[package]/dom/main.js": "./dom/main.js",
-  "/packages/[package]/functions/main.js": "./functions/main.js",
-  "/packages/[package]/functions/remove-slash.js": "./functions/remove-slash.js",
-  "/packages/[package]/components/package.js": "./components/package.js",
-};
+import Package from "./components/package.js";
+
+async function customFetch(url, options) {
+  const response = await fetch(url, options);
+  if (response.status === 404 || response.status === 500) {
+    throw new Error(`fetch error on ${url}`);
+  }
+  return response;
+}
 
 async function requestHandler(request) {
   try {
-    const site = request.headers.get("sec-fetch-site");
-    if (site !== "same-origin") {
-      // 👻
-    }
-    const mode = request.headers.get("sec-fetch-mode");
-    const dest = request.headers.get("sec-fetch-dest");
-
-    const { pathname } = new URL(request.url);
-
-    const staticAsset = assetMap[pathname];
-
-    if (staticAsset) {
-      const response = await Deno.readFile(staticAsset);
-
-      return new Response(response, {
-        headers: { "content-type": contentType(lookup(staticAsset)) },
-      });
-    }
-
     // const [pathPrefix, packageName] = removeSlashes(pathname).split("/");
-
-    if (pathname.startsWith("/packages/")) {
-      const packageName = pathname.substring(10);
+    const { pathname } = new URL(request.url);
+    if (pathname.startsWith("/package/")) {
+      const packageName = pathname.substring(9);
 
       if (packageName) {
-        if (mode === "navigate" || dest === "document") {
-          const response = await Deno.readFile(assetMap["/packages/[package]"])
+        const NPM_PROVIDER_URL = "https://ga.jspm.io/npm:";
+        const baseURL = `${NPM_PROVIDER_URL}${packageName}`;
+        const jspmPackage = await fetch(
+          `${baseURL}/package.json`,
+        );
+        const readmeFilesToFetch = ["README.md", "readme.md"];
 
-          return new Response(response, {
-            headers: { "content-type": contentType("html") },
-          });
-        }
+        const readmeResponse = await Promise.any(
+          readmeFilesToFetch.map((file) =>
+            customFetch(
+              `${baseURL}/${file}`,
+            )
+          ),
+        );
 
-        if (dest === "style") {
-          const [, cssFilePath] = packageName.split('css/');
-          const response = await Deno.readFile(assetMap[`/packages/[package]/css/${cssFilePath}`]);
+        const readmeFileContent = await readmeResponse.text();
+        const readmeHTML = marked.parse(readmeFileContent);
 
-          return new Response(response, {
-            headers: { "content-type": contentType("css") },
-          });
-        }
+        const {
+          name,
+          description,
+          keywords,
+          version,
+          homepage,
+          license,
+          files,
+          exports,
+        } = await jspmPackage.json();
 
-        if (dest === "script") {
-          const jsContexts = ['functions/', 'components/', 'dom/'];
-          const jsContext = jsContexts.find(jsContext =>  packageName.includes(jsContext));
+        const app = renderSSR(
+          jsx
+            `<${Package} name=${name} description=${description} version=${version} homepage=${homepage} license=${license} files=${files} exports=${exports} readme=${readmeHTML} keywords=${keywords} />`,
+        );
 
-          if(jsContext){
-            const [, jsFilePath] = packageName.split(jsContext)
-            const response = await Deno.readFile(assetMap[`/packages/[package]/${jsContext}${jsFilePath}`]);
-  
-            return new Response(response, {
-              headers: { "content-type": contentType("js") },
-            });
-          }
-        }
+        const { body, head, footer } = Helmet.SSR(app);
+
+        const css = `
+            jspm-package-name, jspm-package-version, jspm-package-description, jspm-package-license, jspm-package-file{
+                display: block;
+            }
+          `;
+
+        const html = `
+          <!DOCTYPE html>
+          <html lang="en">
+            <head>
+              <title>${name}@${version} - JSPM</title>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <meta name="description" content=${description}>
+              <style>
+                ${css}
+              </style>
+              ${head.join("\n")}
+            </head>
+            <body>
+              ${body}
+              ${footer.join("\n")}
+            </body>
+          </html>`;
+
+        return new Response(html, {
+          headers: {
+            "content-type": "text/html; charset=UTF-8",
+            "Cache-Control": "s-maxage=1500, public, immutable, stale-while-revalidate=1501",
+          },
+        });
       }
-    }
-
-    if (pathname.startsWith("/api/")) {
-      const packageName = pathname.substring(5);
-      const NPM_PROVIDER_URL = "https://ga.jspm.io/npm:";
-
-      let version =  packageName.split("@")[packageName.startsWith('@') ? 2 : 1];
-
-      if (!version) {
-        const response = await fetch(`${NPM_PROVIDER_URL}${packageName}`);
-        version = await response.text();
-      }
-
-      return fetch(`${NPM_PROVIDER_URL}${packageName}@${version}/package.json`);
     }
 
     return new Response("404", {
-      headers: { "content-type": contentType("html") },
+      headers: { "content-type": "text/html; charset=UTF-8" },
     });
   } catch (error) {
     return new Response(error.message || error.toString(), { status: 500 });
