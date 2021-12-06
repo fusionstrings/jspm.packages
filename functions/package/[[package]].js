@@ -2,16 +2,32 @@ import { Helmet, jsx, renderSSR } from "nano-jsx";
 import { marked } from "marked";
 import Package from "../../components/package.js";
 
+async function customFetch(url, options){
+  const response = await fetch(url, options);
+  if(response.status === 404 || response.status === 500){
+    throw new Error(`fetch error on ${url}`);
+  }
+  return response;
+}
+
 async function onRequestGet({ params, env, waitUntil }) {
   try {
     const NPM_PROVIDER_URL = "https://ga.jspm.io/npm:";
     const packageName = params.package.join("/");
     const baseURL = `${NPM_PROVIDER_URL}${packageName}`;
-    const filesToFetch = ["package.json", "README.md", "readme.md"];
+    const jspmPackage = await fetch(
+      `${baseURL}/package.json`,
+      {
+        cf: {
+          cacheTtlByStatus: { "200-299": 86400, 404: 1, "500-599": 0 },
+        },
+      },
+    )
+    const readmeFilesToFetch = ["README.md", "readme.md"];
 
-    const [jspmPackage, README, readme] = await Promise.all(
-      filesToFetch.map((file) =>
-        fetch(
+    const readmeResponse = await Promise.any(
+      readmeFilesToFetch.map((file) =>
+      customFetch(
           `${baseURL}/${file}`,
           {
             cf: {
@@ -22,9 +38,7 @@ async function onRequestGet({ params, env, waitUntil }) {
       ),
     );
 
-    const readmeFileContent = await [README, readme].find((readmeFile) =>
-      readmeFile.status === 200
-    ).text();
+    const readmeFileContent = await readmeResponse.text();
 
     const readmeHTML = marked.parse(readmeFileContent);
 
