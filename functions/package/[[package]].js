@@ -69,7 +69,7 @@ async function onRequestGet({ params, env, waitUntil }) {
     return new Response(html, {
       headers: {
         "content-type": "text/html; charset=UTF-8",
-        "Cache-Control": "max-age=1500",
+        "Cache-Control": "s-maxage=1500",
       },
     });
   } catch (error) {
