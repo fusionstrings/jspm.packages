@@ -1,0 +1,26 @@
+# This file describes a Fastly Compute@Edge package. To learn more visit:
+# https://developer.fastly.com/reference/fastly-toml/
+
+authors = ["fusionstrings"]
+description = "A basic starter kit that demonstrates routing, simple synthetic responses and overriding caching rules."
+language = "javascript"
+manifest_version = 2
+name = "jspm-packages-fastly"
+service_id = ""
+[local_server]
+  [local_server.backends]
+    [local_server.backends.ga_jspm_io]
+      url = "https://ga.jspm.io"
+      override_host = "ga.jspm.io"
+    # [local_server.backends.localhost]
+    #   url = "http://127.0.0.1:7676"
+
+
+[setup]
+
+ [setup.backends]
+
+    [setup.backends.ga_jspm_io]
+      address = "ga.jspm.io"
+      description = "A backend able to serve `ga.jspm.io` packages"
+      port = 443
